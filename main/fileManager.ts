@@ -30,9 +30,23 @@ export const parseFolder = async (folderPath: string): Promise<ParsedFile[]> => 
 
 export const getFiles = async (folderPath: string): Promise<string[]> => {
   const files = await util.promisify(fs.readdir)(folderPath);
-  return files
-    .filter(f => !f.startsWith('.'))
-    .map(f => path.join(folderPath, f))
+  const result = [];
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    if (!file.startsWith('.')) {
+      const filePath = path.join(folderPath, file)
+      if (fs.lstatSync(filePath).isDirectory()) {
+        const deepFiles = await getFiles(filePath);
+        result.push(...deepFiles);
+      }
+      else {
+        result.push(path.join(folderPath, file));
+      }
+    }
+  }
+
+  return result
     .filter(f => fs.lstatSync(f).isFile());
 };
 
@@ -41,7 +55,7 @@ export const saveFolder = async (data: ParsedFile[]) => {
   const result = await Promise.all(saveAll);
 
   return result
-    .map((success: boolean, index: number) => ({success, file: data[index].fileName}))
+    .map((success: boolean, index: number) => ({ success, file: data[index].fileName }))
     .filter((i: any) => !i.success)
     .map((i: any) => i.file);
 };
