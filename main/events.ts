@@ -23,27 +23,24 @@ const onSave = async (e: any, data: any) => {
   const result = await fileManager.saveFolder(folder);
 
   // get common parent folder
-  const filePaths = path.dirname((folder as ParsedFile[])[0].filePath).split(path.sep);
-  let folderPath = '';
+  let folderPath = path.dirname((folder as ParsedFile[])[0].filePath);
+  const filePaths = folderPath.split(path.sep);
   let subPath = '';
   let isDifferent = false;
 
   for (let i = 0; i < filePaths.length; i++) {
-    subPath += `${filePaths[i]}${path.sep}`;
+    subPath += `${filePaths[i]}`;
     folder.forEach((element: ParsedFile) => {
       if (path.dirname(element.filePath).indexOf(subPath) !== 0) {
         isDifferent = true;
       }
     });
+    subPath += `${path.sep}`;
 
     if (isDifferent) {
       folderPath = filePaths.slice(0, i).join(path.sep);
       break;
     }
-  }
-
-  if (!isDifferent) {
-    folderPath = filePaths.join(path.sep);
   }
 
   await fileManager.openFolderInWindow(folderPath, window);
